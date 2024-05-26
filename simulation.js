@@ -1,9 +1,10 @@
 class Simulation {
 	constructor() {
 		this.particles = [];
+		this.cellSize = 25
 		this.AMOUNT_PARTICLES = 1000;
 		this.VELOCITY_DAMPING = 1;
-		this.fluidHashGrid = new FluidHashGrid(50);
+		this.fluidHashGrid = new FluidHashGrid(this.cellSize);
 
 		this.instantiateParticles();
 		this.fluidHashGrid.initialize(this.particles);
@@ -38,15 +39,22 @@ class Simulation {
 		this.fluidHashGrid.clearGrid();
 		this.fluidHashGrid.mapParticlesToCell();
 		
-		let gridHashId = this.fluidHashGrid.getGridIdFromPos(mousePos);
-		let contentOfCell = this.fluidHashGrid.getContentOfCell(gridHashId);
+		this.particles[0].position = mousePos.Cpy();
+		let contentOfCell = this.fluidHashGrid.getNeighbourOfParticleIdx(0);
+
 		for(let i = 0; i < this.particles.length;i++){
 
 			this.particles[i].color = "#28b0ff";
 		}			
 		for(let i=0;i<contentOfCell.length;i++){
 			let particle = contentOfCell[i];
-			particle.color = "#DF00A8";
+
+			let direction = Sub(particle.position, mousePos);
+			let distanceSquared = direction.Length2();
+			    
+			if(distanceSquared <= this.cellSize * this.cellSize){
+				particle.color = "#DF00A8";
+			}
 		}
 	}
 
