@@ -1,10 +1,11 @@
 class Playground {
 	constructor() {
 		this.simulation = new Simulation();
+		this.mousePos = Vector2.Zero();
 	}
 
-	update(dt) {
-		this.simulation.update(dt);
+	update(dt, mousePos) {
+		this.simulation.update(dt, this.mousePos);
 
 	}
 
@@ -13,7 +14,7 @@ class Playground {
 	}
 
 	onMouseMove(vec) {
-		vec.Log();
+		this.mousePos = vec
 	}
 	onMouseDown(b) {
 		console.log("Mouse Pressed:", b);

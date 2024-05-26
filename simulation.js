@@ -3,32 +3,51 @@ class Simulation {
 		this.particles = [];
 		this.AMOUNT_PARTICLES = 1000;
 		this.VELOCITY_DAMPING = 1;
+		this.fluidHashGrid = new FluidHashGrid(50);
 
 		this.instantiateParticles();
+		this.fluidHashGrid.initialize(this.particles);
 	}
 
-	update(dt) {
+	update(dt, mousePos) {
 		this.predictPositions(dt);
+		this.neighbourSearch(mousePos);
 
 		this.computeNextVelocity(dt);
 		this.worldBoundary();
 	}
 
-	instantiateParticles(){
-		let offsetBetweenParticles = 10;
-		let offsetAllParticles = new Vector2(750,100);
+	instantiateParticles() {
+		let offsetBetweenParticles = 5;
+		let offsetAllParticles = new Vector2(100,100);
 		
 		let xparticles = Math.sqrt(this.AMOUNT_PARTICLES);
 		let yparticles = xparticles;
 
-		for(let x=0; x<xparticles; x++){
-			for(let y=0; y<yparticles; y++){
+		for(let x=0; x<xparticles; x++) {
+			for(let y=0; y<yparticles; y++) {
 				let position = new Vector2(x*offsetBetweenParticles + offsetAllParticles.x, y*offsetBetweenParticles + offsetAllParticles.y);
 				this.particles.push(new Particle(position));
 				
 				this.particles[this.particles.length-1].velocity = Scale(new Vector2(-0.5 + Math.random(), -0.5 + Math.random()), 200);
 			}
 		}		
+	}
+
+	neighbourSearch(mousePos){
+		this.fluidHashGrid.clearGrid();
+		this.fluidHashGrid.mapParticlesToCell();
+		
+		let gridHashId = this.fluidHashGrid.getGridIdFromPos(mousePos);
+		let contentOfCell = this.fluidHashGrid.getContentOfCell(gridHashId);
+		for(let i = 0; i < this.particles.length;i++){
+
+			this.particles[i].color = "#28b0ff";
+		}			
+		for(let i=0;i<contentOfCell.length;i++){
+			let particle = contentOfCell[i];
+			particle.color = "#DF00A8";
+		}
 	}
 
 
@@ -77,7 +96,8 @@ class Simulation {
 
 			let factor = velocityMagnitude / 200;
 			factor = Math.min(Math.max(factor, 0), 1);
-			let color = this.interpolateColor("#DF00A8", "#28B0FF", factor);
+			let color = this.particles[i].color;
+			//this.interpolateColor("#DF00A8", "#28B0FF", factor);
 			DrawUtils.drawPoint(pos, 5, color);
 		}
 
