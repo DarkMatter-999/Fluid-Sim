@@ -10,6 +10,9 @@ class Simulation {
 	        this.K = 0.5;
 		this.INTERACTION_RADIUS = 25;
 
+		this.SIGMA = 0.5;
+	        this.BETA = 0.125;
+
 		this.fluidHashGrid = new FluidHashGrid(this.INTERACTION_RADIUS);
 
 		this.instantiateParticles();
@@ -18,6 +21,9 @@ class Simulation {
 
 	update(dt) {
 		this.applyGravity(dt);
+
+		this.viscosity(dt);
+
 		this.predictPositions(dt);
 
 		this.neighbourSearch();
@@ -43,6 +49,36 @@ class Simulation {
 				// this.particles[this.particles.length-1].velocity = Scale(new Vector2(-0.5 + Math.random(), -0.5 + Math.random()), 200);
 			}
 		}		
+	}
+
+	viscosity(dt) {
+		for(let i=0; i< this.particles.length; i++){
+			let neighbours = this.fluidHashGrid.getNeighbourOfParticleIdx(i);
+			let particleA = this.particles[i];
+
+			for(let j = 0; j < neighbours.length;j++){
+				let particleB = neighbours[j];
+				if(particleA == particleB) continue;
+
+				let rij = Sub(particleB.position,particleA.position);
+				let velocityA = particleA.velocity;
+				let velocityB = particleB.velocity;
+				let q = rij.Length() / this.INTERACTION_RADIUS;
+				
+				if(q < 1){
+					rij.Normalize();
+					let u = Sub(velocityA, velocityB).Dot(rij);
+					if(u > 0){
+						let ITerm = dt * (1-q) * (this.SIGMA * u + this.BETA * u * u);
+						let I = Scale(rij, ITerm);
+
+						particleA.velocity = Sub(particleA.velocity, Scale(I, 0.5));
+						particleB.velocity = Add(particleB.velocity, Scale(I, 0.5));
+					    }
+				}
+			}
+		}
+
 	}
 
 	neighbourSearch(){
