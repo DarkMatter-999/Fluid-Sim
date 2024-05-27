@@ -4,8 +4,8 @@ class Playground {
 		this.mousePos = Vector2.Zero();
 	}
 
-	update(dt, mousePos) {
-		this.simulation.update(dt, this.mousePos);
+	update(dt) {
+		this.simulation.update(0.25);
 
 	}
 
