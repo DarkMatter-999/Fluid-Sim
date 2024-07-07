@@ -25,6 +25,7 @@
 	<script src="drawutils.js"></script>
 	<script src="particle.js"></script>
 	<script src="fluidhashgrid.js"></script>
+	<script src="emitter.js"></script>
 
 	<script>
             var canvas = document.getElementById("canvas");
@@ -82,6 +83,10 @@
             canvas.addEventListener('mouseup', function(evt) {
                 playground.onMouseUp(evt.button);
             }, false);
+
+            document.onkeypress = function(e) {
+                playground.onKeyPress(e);
+            }
         </script>
 
 	</body>
