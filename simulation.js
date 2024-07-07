@@ -2,16 +2,17 @@ class Simulation {
 	constructor() {
 		this.particles = [];
 
-		this.AMOUNT_PARTICLES = 2000;
+		this.AMOUNT_PARTICLES = 1200;
 		this.VELOCITY_DAMPING = 1;
-		this.GRAVITY = new Vector2(0,1);
-		this.REST_DENSITY = 10;
-		this.K_NEAR = 3;
-	        this.K = 0.5;
+		this.GRAVITY = new Vector2(0,1.6);
+		this.REST_DENSITY = 12;
+		this.K_NEAR = 40;
+	    this.K = 1.2;
 		this.INTERACTION_RADIUS = 25;
 
 		this.SIGMA = 0.5;
-	        this.BETA = 0.125;
+	    this.BETA = 0.125;
+		this.PARICLE_RADIUS = 35
 
 		this.fluidHashGrid = new FluidHashGrid(this.INTERACTION_RADIUS);
 
@@ -35,8 +36,8 @@ class Simulation {
 	}
 
 	instantiateParticles() {
-		let offsetBetweenParticles = 10;
-		let offsetAllParticles = new Vector2(100,100);
+		let offsetBetweenParticles = 15;
+		let offsetAllParticles = new Vector2(200,50);
 		
 		let xparticles = Math.sqrt(this.AMOUNT_PARTICLES);
 		let yparticles = xparticles;
@@ -211,7 +212,7 @@ class Simulation {
 			factor = Math.min(Math.max(factor, 0), 1);
 			let color = this.particles[i].color;
 			//this.interpolateColor("#DF00A8", "#28B0FF", factor);
-			DrawUtils.drawPoint(pos, 5, color);
+			DrawUtils.drawPoint(pos, this.PARICLE_RADIUS, color);
 		}
 
 	}
