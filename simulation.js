@@ -1,8 +1,9 @@
 class Simulation {
 	constructor() {
 		this.particles = [];
+		this.particleEmitters = [];
 
-		this.AMOUNT_PARTICLES = 2000;
+		this.AMOUNT_PARTICLES = 20;
 		this.VELOCITY_DAMPING = 1;
 		this.GRAVITY = new Vector2(0,1);
 		this.REST_DENSITY = 10;
@@ -17,9 +18,30 @@ class Simulation {
 
 		this.instantiateParticles();
 		this.fluidHashGrid.initialize(this.particles);
+
+
+		this.emitter = this.createParticleEmitter(
+			new Vector2(canvas.width / 2, 400), // position
+			new Vector2(0,-1), // direction
+			30, // size
+			1,  // spawn interval
+			10, // amount
+			30  // speed
+		);
+
+		this.emit = true;
+		this.rotate = false;
+
 	}
 
 	update(dt) {
+		if(this.emit) {
+			this.emitter.spawn(dt, this.particles);
+		}
+		if(this.rotate) {
+			this.emitter.rotate(0.01);
+		}
+
 		this.applyGravity(dt);
 
 		this.viscosity(dt);
@@ -50,6 +72,13 @@ class Simulation {
 			}
 		}		
 	}
+
+	createParticleEmitter(position, direction, size, spawnInterval, amount, velocity){
+		let emitter = new ParticleEmitter(position, direction, size, spawnInterval, amount, velocity);
+		this.particleEmitters.push(emitter);
+		return emitter;
+	}
+
 
 	viscosity(dt) {
 		for(let i=0; i< this.particles.length; i++){
@@ -213,6 +242,11 @@ class Simulation {
 			//this.interpolateColor("#DF00A8", "#28B0FF", factor);
 			DrawUtils.drawPoint(pos, 5, color);
 		}
+
+		for(let i=0; i< this.particleEmitters.length; i++){
+			this.particleEmitters[i].draw();
+		}
+
 
 	}
 
