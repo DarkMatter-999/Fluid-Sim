@@ -39,32 +39,35 @@ class Simulation {
 
 		this.emit = true;
 		this.rotate = false;
+		this.pause = false;
 
 	}
 
 	update(dt) {
 		this.neighbourSearch();
 
-		if(this.emit) {
+		if(this.emit && !this.pause) {
 			this.emitter.spawn(dt, this.particles);
 		}
-		if(this.rotate) {
+		if(this.rotate && !this.pause) {
 			this.emitter.rotate(0.01);
 		}
 
-		this.applyGravity(dt);
+		if(!this.pause) {
+			this.applyGravity(dt);
 
-		this.viscosity(dt);
+			this.viscosity(dt);
 
-		this.predictPositions(dt);
+			this.predictPositions(dt);
 
-		this.adjustSprings(dt);
-		this.springDisplacement(dt);
+			this.adjustSprings(dt);
+			this.springDisplacement(dt);
 
-		this.doubleDensityRelaxation(dt);
+			this.doubleDensityRelaxation(dt);
 
-		this.worldBoundary();
-		this.computeNextVelocity(dt);
+			this.worldBoundary();
+			this.computeNextVelocity(dt);
+		}
 	}
 
 	instantiateParticles() {

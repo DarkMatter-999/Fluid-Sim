@@ -35,6 +35,9 @@ class Playground {
 			case "r":
 				this.simulation.rotate = !this.simulation.rotate;
 				break;
+			case "p":
+				this.simulation.pause = !this.simulation.pause;
+				break;
 		}
 	}
 }
