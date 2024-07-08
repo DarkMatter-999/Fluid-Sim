@@ -2,6 +2,7 @@ class Simulation {
 	constructor() {
 		this.particles = [];
 		this.particleEmitters = [];
+		this.springs = new Map();
 
 
 		this.AMOUNT_PARTICLES = 1200;
@@ -12,11 +13,19 @@ class Simulation {
 	    this.K = 1.2;
 		this.INTERACTION_RADIUS = 25;
 
-		this.SIGMA = 0.5;
-	    this.BETA = 0.125;
-		this.PARICLE_RADIUS = 35
 
-		this.fluidHashGrid = new FluidHashGrid(this.INTERACTION_RADIUS);
+		// viscous parameters
+		this.SIGMA = 0;
+		this.BETA = 0;
+
+
+		// plastic parameters
+		this.GAMMA = 0.25;
+		this.PLASTICITY = 0.05;
+		this.SPRING_STIFFNESS = 0.125;
+
+		this.HASH_GIRD_CELL_SIZE = 50;
+		this.fluidHashGrid = new FluidHashGrid(this.HASH_GIRD_CELL_SIZE);
 
 		this.instantiateParticles();
 		this.fluidHashGrid.initialize(this.particles);
@@ -37,6 +46,8 @@ class Simulation {
 	}
 
 	update(dt) {
+		this.neighbourSearch();
+
 		if(this.emit) {
 			this.emitter.spawn(dt, this.particles);
 		}
@@ -50,7 +61,8 @@ class Simulation {
 
 		this.predictPositions(dt);
 
-		this.neighbourSearch();
+		this.adjustSprings(dt);
+		this.springDisplacement(dt);
 
 		this.doubleDensityRelaxation(dt);
 
@@ -88,7 +100,7 @@ class Simulation {
 			let particleA = this.particles[i];
 
 			for(let j = 0; j < neighbours.length;j++){
-				let particleB = neighbours[j];
+				let particleB = this.particles[neighbours[j]];
 				if(particleA == particleB) continue;
 
 				let rij = Sub(particleB.position,particleA.position);
@@ -143,7 +155,7 @@ class Simulation {
 			let particleA = this.particles[i];
 
 			for(let j = 0; j < neighbours.length;j++){
-				let particleB = neighbours[j];
+				let particleB = this.particles[neighbours[j]];
 				if(particleA == particleB) continue;
 				
 				
@@ -163,7 +175,7 @@ class Simulation {
 
 		    
 			for(let j=0; j< neighbours.length; j++){
-				let particleB = neighbours[j];
+				let particleB = this.particles[neighbours[j]];
 				if(particleA == particleB){
 					continue;
 				}
@@ -184,6 +196,75 @@ class Simulation {
 		}	
 	}
 
+	adjustSprings(dt) {
+		for(let i=0; i< this.particles.length; i++) {
+			let neighbours = this.fluidHashGrid.getNeighbourOfParticleIdx(i);
+			let particleA = this.particles[i];
+
+			for(let j = 0; j < neighbours.length;j++) {
+				let particleB = this.particles[neighbours[j]];
+				if(particleA == particleB) continue;
+
+				let springId = i + neighbours[j] * this.particles.length;
+
+				if(this.springs.has(springId)) {
+				    continue;
+				}
+
+				let rij = Sub(particleB.position,particleA.position); 
+				let q = rij.Length() / this.INTERACTION_RADIUS;
+
+				if(q < 1) {
+				    let newSpring = new Spring(i, neighbours[j], this.INTERACTION_RADIUS);
+				    this.springs.set(springId, newSpring);
+				}
+			}
+		}
+
+
+		for(let [key, spring] of this.springs) {
+			let pi = this.particles[spring.particleAIdx];
+			let pj = this.particles[spring.particleBIdx];
+
+			let rij = Sub(pi.position, pj.position).Length();
+			let Lij = spring.length;
+			let d = this.GAMMA * Lij;
+
+			if(rij > Lij + d) {
+				spring.length += dt * this.PLASTICITY * (rij - Lij - d); // stretching
+			}else if(rij < Lij - d){ 
+				spring.length -= dt * this.PLASTICITY * (Lij - d - rij); // compression
+			}
+
+			if(spring.length > this.INTERACTION_RADIUS) {
+				this.springs.delete(key);
+			}
+		}
+	}
+
+	springDisplacement(dt) {
+		let dtSquared = dt * dt;
+
+		for(let [key, spring] of this.springs) {
+			let pi = this.particles[spring.particleAIdx];
+			let pj = this.particles[spring.particleBIdx];
+
+			let rij = Sub(pi.position, pj.position);
+			let distance = rij.Length();
+
+			if(distance < 0.0001) {
+				continue;
+			}
+
+			rij.Normalize();
+			let displacementTerm = dtSquared * this.SPRING_STIFFNESS * (1 - spring.length / this.INTERACTION_RADIUS) * (spring.length - distance);
+
+			rij = Scale(rij, displacementTerm * 0.5);
+
+			pi.position = Add(pi.position, rij);
+			pj.position = Sub(pj.position, rij);
+		}
+	}
 
 	predictPositions(dt) {
 		for(let i=0; i<this.particles.length; i++) {
